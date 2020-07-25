@@ -1,6 +1,6 @@
-<h1>Slides Generator</h1>
+<h1>slides-genarator</h1>
 
-<p><b>Slides Generator</b> is an attempt of automating the process of creating slides for a music.</p>
+<p><b>slides-genarator</b> is an attempt of automating the process of creating slides for a music.</p>
 
 <h2>Usage</h2>
 
