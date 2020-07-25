@@ -1,0 +1,8 @@
+powerpoint.py
+build
+".vscode"
+__pycache__
+venv
+images
+setup.py
+tests.py
