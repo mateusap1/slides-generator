@@ -1,6 +1,6 @@
 powerpoint.py
 build
-".vscode"
+.vscode/settings.json
 __pycache__
 venv
 images

@@ -15,8 +15,10 @@ class Translate(Exception):
 
 
 def main():
+    # The default language of the program
     global lng
     lng = "Portuguese"
+
     spaces = 2
 
     global elements
@@ -24,7 +26,6 @@ def main():
 
     main_color = "#1C1C1C"
     color2 = "#363636"
-    # color2 = "#696969"
 
     global window
     window = Tk()
@@ -33,20 +34,19 @@ def main():
     window.geometry("750x450+710+270")
     window.configure(background=main_color)
 
-    # window.iconbitmap("./images/Logo JM-04.ico")
-
     menubar = Menu(window)
 
     languagebar = Menu(menubar, tearoff=0)
     languagebar.add_command(label="Português", command = lambda *args: change_language("Portuguese"))
     languagebar.add_command(label="English", command = lambda *args: change_language("English"))
 
-    languagebar.add_separator()  
+    languagebar.add_separator()
 
     menubar.add_cascade(label="Language", menu=languagebar)
 
     window.config(menu=menubar)
 
+    # Creates a label placed on the top of the program with an empty string as default text
     global error_message
     error_message = Label(window, text="", font=("Sans-Serif", 10, "bold"), fg="red")
     error_message.pack(side = TOP, pady=10)
@@ -59,6 +59,7 @@ def main():
     artist_frame.rowconfigure(0, weight=1)
     artist_frame.configure(background=main_color)
 
+    # This spaces are used so the elements will be aligned. It's not a good code (in fact it's a pretty bad one), but it works
     artist_lbl = Label(artist_frame, text=translate_language("Artista" + " " * (spaces + 16), lng), font=("Sans-Serif", 10, "bold"), fg="white")
     artist_lbl.pack(side = LEFT)
     artist_lbl.configure(background=main_color)
@@ -82,14 +83,12 @@ def main():
     music = Entry(music_frame, font=("Sans-Serif", 10, "bold"), relief="ridge", fg="white")
     music.pack(side = LEFT, fill = X, expand=True)
     music.configure(background=color2)
-    # music.grid(column=1, row=1)
 
     settings = {
         'TCombobox': {
             'configure': {
                 'selectbackground': "#1E90FF",
                 'fieldbackground': color2,
-                # 'background': color2,
                 'foreground': "white",
                 'relief': "ridge"
             }
@@ -216,8 +215,9 @@ def get_directory():
 
 
 def generate():
-    directory =  f"{filedialog.askdirectory(initialdir = get_desktop_path(), title = 'Salvar onde?')}/"
+    directory =  f"{filedialog.askdirectory(initialdir = get_desktop_path(), title = 'Save as')}/"
 
+    # Check if the path is valid
     # Checar se o diretório é válido
     if directory == "/" or not os.path.isdir(directory):
         display_error(translate_language("Caminho Inválido!", lng))
@@ -226,14 +226,18 @@ def generate():
     artist_name = artist.get()
     music_name = music.get()
 
+    # Check if the artist and music names are not empty
     # Checar se artista e música não estão em branco
     if not len(artist_name) > 0 or not len(music_name) > 0:
         display_error(translate_language("Nome do artista ou da música inválido!", lng))
         return
 
+    # "Stk" is the same as "verses per slide"
+    # "Stk" é o mesmo que "versos por slide"
     stk = stacks.get()
 
-    # Checar se stacks são números inteiros de 1 a 5
+    # Check if the verses per slide aree integers from 1 to 8.
+    # Checar se stacks são números inteiros de 1 a 8.
     if not stk.isdigit() or int(stk) < 1 or int(stk) > 8:
         display_error(translate_language("Os versos por slide devem ser um número de 1 a 8!", lng))
         return
@@ -242,6 +246,7 @@ def generate():
 
     pos = position.get().lower()
 
+    # Check if the position is one of the possible positions
     # Checar se a posição está entre as posições existentes
     if not pos in [string.lower() for string in possible_positions()]:
         display_error(translate_language("Posição Inexistente!", lng))
@@ -249,6 +254,7 @@ def generate():
 
     font = fonts.get()
 
+    # Check if the font name is one of the possible names
     # Checar se a fonte está entre as fontes existentes
     if not font in get_fonts():
         display_error(translate_language("Fonte não encontrada!", lng))
@@ -259,6 +265,7 @@ def generate():
 
     font_size = size.get()
 
+    # Check if the size is a number greater then zero and if it's not an integer, transforms it.
     # Verificar se o tamanho é um número maior que 0 e transformá-lo em inteiro (caso não seja)
     if not font_size.isdigit() or int(font_size) < 8 or int(font_size) > 100:
         display_error(translate_language("Tamanho da fonte deve ser um número de 8 a 100!", lng))
@@ -268,6 +275,7 @@ def generate():
 
     src = path.get()
 
+    # Check if it's a valid image
     # Checar se a imagem existe
     if not os.path.isfile(src):
         display_error(translate_language("Imagem não encontrada!", lng))
@@ -277,14 +285,18 @@ def generate():
 
     text = lyrics.get("1.0", "end")
 
-    if len(artist_name) > 0 and len(music_name) > 0:
-        start = time.time()
-        if text.replace("\n", "") == "":
-            text = None
-        slides = create_slides(src, artist_name, music_name, font, font_size, color, pos, stk, directory, 80, text)
-        print("Time:", time.time() - start)
-        if not slides:
-            display_error(translate_language("A letra dessa música não foi encontrada. Tente digitar a letra manualmente na aba 'texts'.", lng))
+    start = time.time()
+
+    # Removes any "\n" that the user may have writen by accident
+    if text.replace("\n", "") == "":
+        text = None
+    
+    slides = create_slides(src, artist_name, music_name, font, font_size, color, pos, stk, directory, 80, text)
+
+    print("Time:", time.time() - start)
+
+    if not slides: # If the lyrics weren't found, displays an error message
+        display_error(translate_language("A letra dessa música não foi encontrada. Tente digitar a letra manualmente na aba 'texts'.", lng))
 
 
 def translate_language(text, language):

@@ -7,7 +7,7 @@ from get_lyrics import requestsScrape, divide_by_text
 
 
 def create_slides(src, artist, music, font, font_size, color, position, stacks=2, directory="./slides/", border=20, text=None):
-    """De acordo com o "path" de uma imagem padrão e com um artista e uma múscia, cria os slides"""
+    """Creates slides accroding to the name of the artist and music or according to a text"""
 
     # If the user writes any text, this function will use it. Otherwise, it will get the lyrics using the 'webscraping' function
     # Se o usuário colocou algum texto, o programa vai usar esse texto. Caso contrário, pega a letra através de 'webscraping'
