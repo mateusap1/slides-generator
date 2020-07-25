@@ -22,7 +22,6 @@
   </li>
   <li>
     <h3>Lyrics (optional)</h3>
-    <p>If the lyrics couldn't be found by the program, which is possible because sometimes there is a music that is not well known, you can manually copy
-    it and paste on this field.</p>
+    <p>If the lyrics couldn't be found by the program you can manually copy it and paste on this field.</p>
   </li>
 </ul>
