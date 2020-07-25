@@ -1,6 +1,4 @@
 pillow
 matplotlib
-numpy
 requests
 requests-html
-selenium
