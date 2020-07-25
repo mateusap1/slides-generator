@@ -209,7 +209,7 @@ def change_language(lang):
 
 
 def get_directory():
-    filename =  filedialog.askopenfilename(initialdir = get_desktop_path(), title = "Imagem de Fundo", filetypes = (("png files","*.png"), ("jpeg files","*.jpeg")))
+    filename =  filedialog.askopenfilename(initialdir = get_desktop_path(), title = "Imagem de Fundo", filetypes = (("png files","*.png"), ("jpeg files","*.jpg")))
     path.delete("0", "end")
     path.insert(0, filename)
 
