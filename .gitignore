@@ -1,8 +1,7 @@
-powerpoint.py
 build
 .vscode/settings.json
 __pycache__
-venv
+myscripts/venv
 images
-setup.py
-tests.py
+myscripts/setup.py
+myscripts/tests.py
