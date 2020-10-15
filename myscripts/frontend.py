@@ -10,6 +10,9 @@ import time
 import os
 
 
+with open("save_config.txt", "r") as config_file:
+        config = config_file.read().split("\n")
+
 class Translate(Exception):
     pass
 
@@ -65,10 +68,12 @@ def main():
     artist_lbl.configure(background=main_color)
     elements.append(artist_lbl)
 
+
     global artist
     artist = Entry(artist_frame, font=("Sans-Serif", 10, "bold"), relief="ridge", fg="white")
     artist.pack(side = LEFT, fill = X, expand=True)
     artist.configure(background=color2)
+    artist.insert(0, config[1])
 
     music_frame = Frame(window)
     music_frame.pack(fill = X, padx=10, pady=10)
@@ -83,6 +88,7 @@ def main():
     music = Entry(music_frame, font=("Sans-Serif", 10, "bold"), relief="ridge", fg="white")
     music.pack(side = LEFT, fill = X, expand=True)
     music.configure(background=color2)
+    music.insert(0, config[2])
 
     settings = {
         'TCombobox': {
@@ -111,7 +117,7 @@ def main():
     global stacks
     stacks = Combobox(stacks_frame, width = 3, font=("Sans-Serif", 10, "bold"))
     stacks["values"] = [i for i in range(1, 9)]
-    stacks.current(1)
+    stacks.current(int(config[3])-1)
     stacks.pack(side = LEFT, fill=X, expand=True)
 
     position_label = Label(stacks_frame, text= translate_language(" " * spaces + "Posição" + " " * spaces, lng), font=("Sans-Serif", 10, "bold"), fg="white")
@@ -122,7 +128,7 @@ def main():
     global position
     position = Combobox(stacks_frame, width = 11, font=("Sans-Serif", 10, "bold"))
     position["values"] = possible_positions()
-    position.current(3)
+    position.current(position["values"].index("-".join([i.capitalize() for i in config[4].split("-")])))
     position.pack(side = RIGHT, fill=X, expand=True)
 
     font_frame = Frame(window)
@@ -139,13 +145,16 @@ def main():
     font_names = get_fonts()
     fonts = Combobox(font_frame, width=10, font=("Sans-Serif", 10, "bold"))
     fonts["values"] = font_names
-    fonts.current(font_names.index("Arial"))
+    fonts.current(font_names.index(config[5]))
     fonts.pack(side = LEFT, fill = X, expand = True)
 
     global size
     size = Combobox(font_frame, width = 11, font=("Sans-Serif", 10, "bold"))
     size["values"] = [8, 9, 10, 11, 12, 14, 18, 24, 30, 36, 48, 60, 72, 96]
-    size.current(8)
+    try:
+        size.current(size["values"].index(config[6]))
+    except ValueError:
+        size.insert(0, config[6])
     size.pack(side = RIGHT, fill=X, expand=True)
 
     size_lbl = Label(font_frame, text=translate_language(" " * spaces + "Tamanho" + " " * spaces, lng), font=("Sans-Serif", 10, "bold"), fg="white")
@@ -165,7 +174,10 @@ def main():
 
     global path
     path = Entry(path_frame, font=("Sans-Serif", 10, "bold"), relief="ridge", fg="white")
-    path.insert(0, fr"{get_desktop_path()}\exempleimg.png")
+    if not config[7]:
+        path.insert(0, fr"{get_desktop_path()}/exempleimg.png")
+    else:
+        path.insert(0, config[7])
     path.pack(side = LEFT, fill = X, expand=True)
     path.configure(background=color2)
 
@@ -215,7 +227,11 @@ def get_directory():
 
 
 def generate():
-    directory =  f"{filedialog.askdirectory(initialdir = get_desktop_path(), title = 'Save as')}/"
+    if not config[0]:
+        initial_dir = get_desktop_path()
+    else:
+        initial_dir = config[0]
+    directory =  f"{filedialog.askdirectory(initialdir = initial_dir, title = 'Save as')}/"
 
     # Check if the path is valid
     # Checar se o diretório é válido
@@ -291,7 +307,18 @@ def generate():
     if text.replace("\n", "") == "":
         text = None
     
-    slides = create_slides(src, artist_name, music_name, font, font_size, color, pos, stk, directory, 80, text)
+    with open("save_config.txt", "w") as file_:
+        file_.write(directory + "\n")
+        file_.write(artist_name + "\n")
+        file_.write(music_name + "\n")
+        file_.write(str(stk) + "\n")
+        file_.write(pos + "\n")
+        file_.write(fonts.get() + "\n")
+        file_.write(str(font_size) + "\n")
+        file_.write(src)
+
+    
+    slides = create_slides(src, artist_name, music_name, font, font_size, color, pos, stk, directory, 80, text, shadow=True)
 
     print("Time:", time.time() - start)
 
@@ -322,7 +349,7 @@ def display_error(error):
 
 def get_desktop_path():
     """Returns the default downloads path for linux or windows"""
-    return os.path.join(os.path.join(os.environ['USERPROFILE']), 'Desktop')
+    return os.path.expanduser("~/Desktop")
 
 
 if __name__ == "__main__":

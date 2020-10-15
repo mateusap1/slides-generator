@@ -28,7 +28,7 @@ def assign_image(srcImage):
     return original
 
 
-def draw_text(image, text, font, size, color, pos_name):
+def draw_text(image, text, font, size, color, pos_name, shadow=False):
     """Returns an image with a text"""
     # Make a copy of the image
     image = image.copy()
@@ -46,10 +46,12 @@ def draw_text(image, text, font, size, color, pos_name):
 
     w, h = draw.textsize(text, font=font_type)
 
-    position = get_position(height, h, width, w, pos_name)
+    position = get_position(height, h, width, w, pos_name, shadow=shadow)
 
     if color in rgb_colors:
         color = rgb_colors[color]
+    else:
+        raise Exception("Cor inválida")
 
     draw.text(xy=position, text=text, fill=color,
               font=font_type, align=check_alignment(pos_name))
@@ -59,7 +61,7 @@ def draw_text(image, text, font, size, color, pos_name):
 
 def possible_positions():
     # return ['Meio', 'Centro-Esquerda', 'Centro-Direita', 'Inferior-Esquerda', 'Inferior-Direita']
-    return ['Middle', 'Center-Left', 'Center-Right', 'Bottom-Left', 'Bottom-Right']
+    return ['Middle', 'Center-Left', 'Center-Right', 'Bottom-Left', 'Bottom-Right', 'Bottom-Center']
 
 
 def check_alignment(name):
@@ -70,6 +72,7 @@ def check_alignment(name):
         'center-right': 'right',
         'bottom-left': 'left',
         'bottom-right': 'right',
+        'bottom-center': 'center',
     }
 
     if name in translate_alignment:
@@ -78,15 +81,17 @@ def check_alignment(name):
         return None
 
 
-def get_position(height, h, width, w, pos, border=80):
+def get_position(height, h, width, w, pos, border=80, shadow=False):
     """Returns a position according to the dictionary 'places' or, if it's not there, returns the position itself"""
+    extra = 2
 
     places = {
-        'middle': (int((width - w) / 2), int((height - h) / 2)),
-        'center-left': (border, int((height - h) / 2)),
-        'center-right': (width - w - border, int((height - h) / 2)),
-        'bottom-left': (border, height - border - h),
-        'bottom-right': (width - w - border, height - border - h),
+        'middle': (int((width - w) / 2) - extra * shadow, int((height - h) / 2) + extra * shadow),
+        'center-left': (border - extra * shadow, int((height - h) / 2) + extra * shadow),
+        'center-right': (width - w - border - extra * shadow, int((height - h) / 2) + extra * shadow),
+        'bottom-left': (border - extra * shadow, height - border - h + extra * shadow),
+        'bottom-right': (width - w - border - extra * shadow, height - border - h + extra * shadow),
+        'bottom-center': (int((width - w) / 2) - extra * shadow, height - border - h + extra * shadow),
     }
 
     if pos in places:
@@ -114,8 +119,9 @@ def get_fonts():
     return fonts
 
 
-def get_font_path(family):
+def get_font_path(family, font_format=None):
     """Returns the regular font path according to its family"""
-    font = matplotlib.font_manager.FontProperties(family=family)
+    weight = "bold" if font_format == "bold" else None
+    font = matplotlib.font_manager.FontProperties(family=family, weight=weight)
     file = matplotlib.font_manager.findfont(font)
     return file

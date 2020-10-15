@@ -2,11 +2,12 @@ import os
 import simplify
 import tarfile
 import shutil
+import re
 
 from get_lyrics import requestsScrape, divide_by_text
 
 
-def create_slides(src, artist, music, font, font_size, color, position, stacks=2, directory="./slides/", border=20, text=None):
+def create_slides(src, artist, music, font, font_size, color, position, stacks=2, directory="./slides", border=20, text=None, shadow=False):
     """Creates slides accroding to the name of the artist and music or according to a text"""
 
     # If the user writes any text, this function will use it. Otherwise, it will get the lyrics using the 'webscraping' function
@@ -18,11 +19,10 @@ def create_slides(src, artist, music, font, font_size, color, position, stacks=2
 
     # If it could not find the lyrics, return None
     # Se não houver letra, retorna None
-    if not letra or len(letra) == 0:
+    if not letra:
         return None
 
     name = f"{music} ({artist}) - Slides"
-    file_dir = f"{directory}{name}"
 
     # Get all the folders in the path selected by the user, so we can delete any folder that has this same name
     # Pega todas as pastas no caminho que o usuário escolheu para que o programa delete qualquer pasta com o mesmo nome da pasta que pretendemos criar
@@ -30,9 +30,17 @@ def create_slides(src, artist, music, font, font_size, color, position, stacks=2
 
     # If there is a folder with the same name, delete it
     # Se já há uma pasta com os mesmos slides, deleta ela
-    if name in files:
-        shutil.rmtree(f"{file_dir}")
+    # if name in files:
+    #     shutil.rmtree(f"{file_dir}")
 
+    regex = '\(\d+\)'
+
+    i = 0
+    while name in files:
+        name = f"{re.sub(regex, '', name)} ({i + 1})"
+        i += 1
+    
+    file_dir = f"{directory}/{name}"
     os.mkdir(file_dir)
 
     # Create an image object (using Pillow) according to the path the user gave us
@@ -47,10 +55,34 @@ def create_slides(src, artist, music, font, font_size, color, position, stacks=2
 
     # Just adjusting the position of the Music title and artist name to be in the bottom-left corner.
     pos = (border, height - border - (music_size + artist_size + 10))
-    image = simplify.draw_text(image=image, text=music, font=font, size=music_size, color="white", pos_name=pos)
+    shadow_pos = (border - 3, height - border - (music_size + artist_size + 10) + 3)
+
+    # if shadow:
+    #     image = simplify.draw_text(image=image, text=music, font=font, size=music_size, \
+    #         color="black", pos_name=shadow_pos)
+    # image = simplify.draw_text(image=image, text=music, font=font, size=music_size, color="white", pos_name=pos)
+
+    if shadow:
+        image = simplify.draw_text(image=image, text=music+"\n", font=font, size=music_size, \
+            color="black", pos_name=position, shadow=True)
+    image = simplify.draw_text(image=image, text=music+"\n", font=font, size=music_size, \
+        color="white", pos_name=position)
 
     pos = (border, height - border - (artist_size))
-    simplify.draw_text(image=image, text=artist, font=font, size=artist_size, color="white", pos_name=pos).save(f"{file_dir}/0.png")
+    shadow_pos = (border - 3, height - border - (artist_size) + 3)
+
+    # if shadow:
+    #     image = simplify.draw_text(image=image, text=artist, font=font, size=artist_size, color="black", \
+    #         pos_name=shadow_pos)
+    # simplify.draw_text(image=image, text=artist, font=font, size=artist_size, color="white", \
+    #     pos_name=pos).save(f"{file_dir}/0.png")
+
+    if shadow:
+        image = simplify.draw_text(image=image, text=artist, font=font, size=artist_size, color="black", \
+            pos_name=position, shadow=True)
+    simplify.draw_text(image=image, text=artist, font=font, size=artist_size, color="white", \
+        pos_name=position).save(f"{file_dir}/0.png")
+    
 
     image = simplify.assign_image(src)
 
@@ -64,7 +96,12 @@ def create_slides(src, artist, music, font, font_size, color, position, stacks=2
                 last = len(estrofe)
                 text = "\n".join([estrofe[i] for i in range(n, last)])
 
-            simplify.draw_text(image=image, text=text.upper(), font=font, size=font_size, color="white", pos_name=position).save(f"{file_dir}/{count}.png")
+            image = simplify.assign_image(src)
+            if shadow:
+                image = simplify.draw_text(image=image, text=text.upper(), font=font, size=font_size, \
+                    color="black", pos_name=position, shadow=True)
+            simplify.draw_text(image=image, text=text.upper(), font=font, size=font_size, \
+                color="white", pos_name=position).save(f"{file_dir}/{count}.png")
 
             count += 1
     

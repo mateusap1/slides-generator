@@ -13,6 +13,17 @@ from unicodedata import normalize
 def requestsScrape(artist, music):
     """Gets the lyrics from cifraclub according to the artist and music names"""
 
+    print(""" 
+
+                    .__  .__    .___      
+______ ___.__. _____|  | |__| __| _/____  
+\____ <   |  |/  ___/  | |  |/ __ |/ __ \ 
+|  |_> >___  |\___ \|  |_|  / /_/ \  ___/ 
+|   __// ____/____  >____/__\____ |\___  >
+|__|   \/         \/             \/    \/ 
+
+""")
+
     # Basically changes the name in a way that the website will understand
     artist = stress_remove(artist).lower().replace(" ", "-")
     music = stress_remove(music).lower().split(" ")
@@ -32,6 +43,8 @@ def requestsScrape(artist, music):
             return None
     
     result = filter_letra(letra)
+
+    print("-" * 50)
     
     return result
 
@@ -55,6 +68,7 @@ def pure_letra(url):
     if len(lyrics) == 0:
         lyrics = response.html.xpath('//div[@class="letra"]/div[@class="letra-l"]/p')
 
+    print("-" * 50)
     print(time() - start, "-> Get the lyrics from the website")
     return lyrics
 
@@ -105,13 +119,12 @@ def search_in_google(artist, music):
         print(e)
         return None
     
-    link = response.html.xpath('//div[@class="r"]/a/@href')
+    link = response.html.xpath('//div[@class="yuRUbf"]/a/@href')
 
     print(time() - start, "-> Pesquisar no Google")
     
-    print(link[0])
-    # I think it's pretty clear what this does
-    if "https://www.cifraclub" not in link[0]:
+    if not link or "https://www.cifraclub" not in link[0]:
+        print(f"Failed to find {music} lyrics!")
         return None
     else:
         return link[0]
