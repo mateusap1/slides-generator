@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
+    <link rel="stylesheet" href="{{ url_for('static',    filename='css/template.css') }}">
+    <link rel="icon" href="{{ url_for('static',    filename='SG.svg') }}" type="image/svg+xml">
+
+    <script type="text/javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ho+j7jyWK8fNQe+A12Hb8AhRq26LrZ/JpcUGGOn+Y7RsweNrtN/tE3MoK7ZeZDyx" crossorigin="anonymous"></script>
+
+    <title>Slides Generator</title>
+</head>
+<body>
+  <!-- Image and text -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <a class="navbar-brand" href="/">
+      <img src="{{ url_for('static',    filename='SG.svg') }}" width="30" height="30" class="d-inline-block align-top" alt="" loading="lazy">
+      Slides Generator
+    </a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+  </nav>
+
+
+  <!-- Modal -->
+  <div class="modal fade" id="did-you-mean" tabindex="-1" aria-labelledby="did-you-mean-label" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="did-you-mean-label">Could not find the lyrics</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body" id="modal-body">
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <div class="vertical-center">
+    <div class="container-sm w-auto">
+
+      <h1 class="text-center">Generate Music Slides</h1>
+      <br>
+
+      <form action="/" method="POST" name="main-form" id="main-form" onSubmit="return captureForm()" role="form" enctype="multipart/form-data">        
+        <div>
+          <div class="input-group mb-3">
+            <div class="input-group-prepend">
+              <span class="input-group-text user-select-none">Lyrics and File format</span>
+            </div>
+  
+            <select class="custom-select" name="auto-or-manual" id="auto-or-manual">
+              <option value="auto">Automatic</option>
+              <option value="manual">Manual</option>
+            </select>
+  
+            <select class="custom-select" name="pwp-or-img" id="pwp-or-img">
+              <option value="pwp">PowerPoint (.pptx)</option>
+              <option value="manual">Image Show (.png)</option>
+            </select>
+          </div>
+        </div>
+        
+        
+        
+        <!-- <div class="space-between mb-3">
+          <div class="form-check form-check-inline">
+            <input class="form-check-input" type="radio" name="pwp-or-img" id="pwp-or-img1" value="pwp" checked>
+            <label class="form-check-label" for="pwp-or-img1">
+              PowerPoint (.pptx)
+            </label>
+          </div>
+          <div class="form-check form-check-inline">
+            <input class="form-check-input" type="radio" name="pwp-or-img" id="pwp-or-img2" value="img">
+            <label class="form-check-label" for="pwp-or-img2">
+              Image Show (.png)
+            </label>
+          </div>
+        </div> -->
+
+        <div>
+          <div class="input-group mb-3">
+            <div class="input-group-prepend">
+              <span class="input-group-text user-select-none">Music and Artist</span>
+            </div>
+
+            <input type="text" aria-label="music" class="form-control" name="music" placeholder="Music" required>
+
+            <input type="text" aria-label="artist" class="form-control" name="artist" placeholder="Artist" required>
+          </div>
+        </div>
+
+        <div>
+          <div class="input-group mb-3">
+            <div class="input-group-prepend">
+              <span class="input-group-text user-select-none">Font and Format</span>
+            </div>
+
+            <select class="custom-select" name="font-names" id="font-names">
+              {% for name in font_names %}
+                <option value="{{ name }}">{{ name }}</option>
+              {% endfor %}
+            </select>
+
+            <select class="custom-select" name="format" id="format">
+              {% for format in formats %}
+                <option value="{{ format }}">{{ format }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <div class="input-group mb-3">
+            <div class="input-group-prepend">
+              <span class="input-group-text user-select-none">Verses p/ slide and Position</span>
+            </div>
+
+            <input type="number" min="1" max="8" aria-label="stacks" class="form-control"
+            name="stacks" placeholder="Verses p/ Slide" required>
+
+            <select class="custom-select" name="positions" id="positions">
+              {% for position in positions %}
+                <option value="{{ position }}">{{ position }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <div class="input-group mb-3">
+            <div class="input-group-prepend">
+              <span class="input-group-text user-select-none">Border and Font size</span>
+            </div>
+
+            <input type="number" min="0" max="220" aria-label="border" class="form-control"
+            name="border" placeholder="Border" required>
+
+            <input type="number" min="8" max="220" aria-label="font-sizes" class="form-control"
+            name="font-sizes" placeholder="Font size" required>
+          </div>
+        </div>
+
+        <div class="input-group mb-3">
+          <div class="input-group-prepend">
+            <span class="input-group-text user-select-none" id="background-path-label">Upload</span>
+          </div>
+          <div class="custom-file">
+            <input type="file" class="custom-file-input" name="background-path" 
+            id="background-path" aria-describedby="background-path-label" accept="image/*" required>
+            <label class="custom-file-label user-select-none" for="background-path">Background image</label>
+          </div>
+        </div>
+
+        <div class="input-group mb-3 lyrics">
+          <div class="input-group-prepend">
+            <span class="input-group-text">Lyrics</span>
+          </div>
+          <textarea name="lyrics" id="lyrics" class="form-control" aria-label="With textarea"></textarea>
+        </div>
+
+        <div class="text-center mb-3 submit-btn">
+          <input class="btn btn-primary" type="submit" value="Generate" id="submit-button">
+        </div>
+        
+        <div class="text-center mb-3 loading" style="display: none;">
+          <img src="{{ url_for('static',    filename='Loading.svg') }}" width="50" height="50" class="d-inline-block align-top" alt="" loading="lazy">
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+  <script>
+    document.querySelector('.custom-file-input').addEventListener('change',function(e){
+      var fileName = document.getElementById("background-path").files[0].name;
+      var nextSibling = e.target.nextElementSibling
+      nextSibling.innerText = fileName
+    })
+
+    function captureForm() {
+      $('.loading').css('display', 'block');
+      $('.submit-btn').css('display', 'none');
+
+      var return_value = true
+      $.ajax({
+        url: '/validate/',
+        data: $('form').serialize(),
+        async: false,
+        type: 'POST',
+      })
+      .fail(function(xhr, status, error) {
+        //Ajax request failed.
+        $('#modal-body').text(JSON.parse(xhr.responseText))
+        $('#did-you-mean').modal('show')
+
+        return_value = false
+      })
+
+      $('.loading').css('display', 'none');
+      $('.submit-btn').css('display', 'block');
+      
+      return return_value;
+    }
+
+    $(document).ready(function() {
+      if ($('#auto-or-manual').val() != 'manual') {
+        $('.lyrics').css('display', 'none');
+        $('#lyrics').attr('required', false);
+      }
+    });
+
+    $('#auto-or-manual').change(function () { 
+      if ($(this).val() === 'manual'){
+        $('.lyrics').css('display', 'flex');
+        $('#lyrics').attr('required', true);
+      }
+      if ($(this).val() === 'auto'){
+        $('.lyrics').css('display', 'none');
+        $('#lyrics').attr('required', false);
+        $('#lyrics').val("")
+      }
+    });
+  </script>
+</body>
+</html>

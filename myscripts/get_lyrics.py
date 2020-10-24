@@ -10,49 +10,45 @@ from time import sleep, time
 from unicodedata import normalize
 
 
-def requestsScrape(artist, music):
+def requestsScrape(original_artist, original_music):
     """Gets the lyrics from cifraclub according to the artist and music names"""
 
-    print(""" 
-
-                    .__  .__    .___      
-______ ___.__. _____|  | |__| __| _/____  
-\____ <   |  |/  ___/  | |  |/ __ |/ __ \ 
-|  |_> >___  |\___ \|  |_|  / /_/ \  ___/ 
-|   __// ____/____  >____/__\____ |\___  >
-|__|   \/         \/             \/    \/ 
-
-""")
-
     # Basically changes the name in a way that the website will understand
-    artist = stress_remove(artist).lower().replace(" ", "-")
-    music = stress_remove(music).lower().split(" ")
-    music = list(filter(lambda i: i != "e", music))
-    music = "-".join(music)
+    # artist = stress_remove(original_artist).lower().replace(" ", "-")
+    # music = stress_remove(original_music).lower().split(" ")
+    # music = list(filter(lambda i: i != "e", music))
+    # music = "-".join(music)
 
-    url = f"https://www.cifraclub.com.br/{artist}/{music}/letra/"
+    # url = f"https://www.cifraclub.com.br/{artist}/{music}/letra/"
     
-    # Get the lyrics from the website
-    letra = pure_letra(url)
+    # # Get the lyrics from the website
+    # letra = pure_letra(url)
 
     # If it didn't find anything, use the search_in_google function to find the correct url and filters it
-    if len(letra) == 0:
-        letra = pure_letra(f"{search_in_google(artist, music)}/letra")
+    # if len(letra) == 0:
+    url = search_in_google(original_artist, original_music)
+    if not url:
+        return None
+    else:
+        title = get_music_title(url)
 
-        if len(letra) == 0:
-            return None
+    if not title:
+        return None
+    else:
+        music, artist = title
+
+    if original_artist == artist and original_music == music:
+        letra = pure_letra(f"{url}/letra")
+    else:
+        return {"Music": music, "Artist": artist, "Url": url}
     
     result = filter_letra(letra)
-
-    print("-" * 50)
     
     return result
 
 
 def pure_letra(url):
-    """Goes to the url and try to find the lyrics. If it wasn't the right website returns an empty list"""
-    start = time()
-    
+    """Goes to the url and try to find the lyrics. If it wasn't the right website returns an empty list"""   
     try:
         session = HTMLSession()
         response = session.get(url)   
@@ -68,16 +64,12 @@ def pure_letra(url):
     if len(lyrics) == 0:
         lyrics = response.html.xpath('//div[@class="letra"]/div[@class="letra-l"]/p')
 
-    print("-" * 50)
-    print(time() - start, "-> Get the lyrics from the website")
     return lyrics
 
 
 # Filtra a letra em um formato mais fácil para usar depois
 def filter_letra(link):
     """Filters the lyrics, so it's easier to manipulate it"""
-    start = time()
-
     # Basically splits the strophes in verses. *Is 'strophes' really a word? I mean 'group of verses'.
     # Basicamente divide as estrofes em versos
     if hasattr(link[0], 'text'):
@@ -101,16 +93,13 @@ def filter_letra(link):
                     result.insert(i+1, result[i])
                     if result[i][j] == "":
                         result[i].pop(j)
-    
-    print(time() - start, "-> Filtrar a Letra")
+
     return result
 
 
 # Faz uma pesquisa no google e retorna o link do cifraclub
 def search_in_google(artist, music):
     """Makes a google search and returns the cifraclub link"""
-    start = time()
-
     url = f"https://www.google.com/search?q={music} {artist} cifra club"
     try:
         session = HTMLSession()
@@ -120,8 +109,6 @@ def search_in_google(artist, music):
         return None
     
     link = response.html.xpath('//div[@class="yuRUbf"]/a/@href')
-
-    print(time() - start, "-> Pesquisar no Google")
     
     if not link or "https://www.cifraclub" not in link[0]:
         print(f"Failed to find {music} lyrics!")
@@ -130,9 +117,32 @@ def search_in_google(artist, music):
         return link[0]
 
 
+def get_music_title(url):
+    try:
+        session = HTMLSession()
+        response = session.get(url)   
+    except requests.exceptions.RequestException as e:
+        print(e)
+        return None
+    
+
+    music_el = response.html.xpath('//h1[@class="t1"]')
+    artist_el = response.html.xpath('//h2[@class="t3"]')
+
+    if not music_el or not artist_el:
+        return None
+    else:
+        music = music_el[0].text
+        artist = artist_el[0].text
+    
+    return music, artist
+
+
 # Divide a letra em versos e estrofes
 def divide_by_text(text):
     """Divides the lyrics in verses and strophes"""
+    text = text.replace("\r", "")
+
     while text[-1] == "\n":
         text = text[:-1]
 
@@ -146,7 +156,11 @@ def divide_by_text(text):
 
     text = [re.sub(regex, "", i) for i in text]
 
-    return filter_letra(text)
+    letra = filter_letra(text)
+
+    letra = filter(lambda x : len(x) > 0 and not "" in x, letra)
+
+    return list(letra)
 
 
 # https://wiki.python.org.br/RemovedorDeAcentos

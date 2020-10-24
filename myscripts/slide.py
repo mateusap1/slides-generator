@@ -14,7 +14,7 @@ from pptx import Presentation
 from pptx.util import Pt, Inches, Cm
 from pptx.util import Length
 from pptx.dml.color import ColorFormat, RGBColor
-from pptx.enum.text import MSO_AUTO_SIZE, PP_ALIGN
+from pptx.enum.text import MSO_AUTO_SIZE, PP_ALIGN, MSO_ANCHOR
 
 
 # def find(s, ch):
@@ -33,7 +33,6 @@ def split_sentence(sentence, times):
     splited = [] 
 
     if len(spc_idxs) - 2 < times:
-        print(sentence, times)
         raise Exception("\"times\" must be less or equal the number of blank spaces!")
     elif len(spc_idxs) - 2 == times:
         for i, idx in enumerate(spc_idxs):
@@ -75,7 +74,7 @@ class Px(Length):
     """
 
     def __new__(cls, px):
-        return Length.__new__(cls, Cm(px / 118.121554))
+        return Inches(px / 100)
 
 
 class Colors(object):
@@ -106,9 +105,9 @@ class Positions(object):
         self.update()
     
     def update(self):
-        top = self.border + self.extra * self.shadow
-        bottom = self.height - self.border - self.h + self.extra * self.shadow
-        h_center = int((self.height - self.h) / 2) + self.extra * self.shadow
+        top = self.border - self.extra * self.shadow
+        bottom = self.height - self.border - self.h - self.extra * self.shadow
+        h_center = int((self.height - self.h) / 2 - self.extra * self.shadow)
         w_center = int((self.width - self.w) / 2) - self.extra * self.shadow
         right = self.width - self.w - self.border * (self.width / self.height) - self.extra * self.shadow
         left = self.border * (self.width / self.height) - self.extra * self.shadow
@@ -136,7 +135,8 @@ class Positions(object):
                 w = size[0]
                 greater = w if w > greater else greater
 
-                h += font_type.getsize("A")[1] + 2
+                # h += font_type.getsize("A")[1]
+                h += font_type.getsize(sentence)[1]
 
             w = greater
         else:
@@ -166,19 +166,22 @@ class Positions(object):
 
 
 class FontType(object):
-    def __init__(self, family_font, size, weigth=False):
+    def __init__(self, family_font, size, text_format=None):
         self._family_font = family_font
         self._size = size
-        self._weigth = weigth
+        self._text_format = text_format
 
     def get_path(self):
-        return simplify.get_font_path(self._family_font, "bold" if self._weigth else None)
+        return simplify.get_font_path(self._family_font, self._text_format)
     
     def get_size(self):
         return self._size
     
-    def is_bold(self):
-        return self._weigth
+    def get_family(self):
+        return self._family_font
+    
+    def get_text_format(self):
+        return self._text_format
 
     def set_size(self, size):
         self._size = size
@@ -186,16 +189,19 @@ class FontType(object):
     def set_family(self, family):
         self._family_font = family
     
-    def set_weight(self, weight):
-        self._weigth = weight
+    def set_text_format(self, text_format):
+        self._text_format = text_format
 
 
 class Slide(object):
-    def __init__(self):
+    def __init__(self, background_path):
         self.width = 1920
         self.height = 1080
 
-        self.font_type = FontType("Ubuntu", 40, "bold")
+        self.background_path = background_path
+
+        self.font_type = FontType("Ubuntu", 40)
+        self.shadow = False
 
         self.color = getattr(Colors(), "white")
 
@@ -208,6 +214,8 @@ class Slide(object):
         self.extra = 5 # Shadow distance
 
         self.position = "middle"
+
+        self.prs = None
     
 
     def adapt_size(self, lyrics, limit):
@@ -231,11 +239,11 @@ class Slide(object):
         
         return new
     
-    def create_imageshow(self, background_path, lyrics, shadow=False):
+    def create_imageshow(self, lyrics):
         """
         Creates an image show
         """
-        image = simplify.assign_image(background_path)
+        image = simplify.assign_image(self.background_path)
 
         os.mkdir(self.directory)
 
@@ -244,14 +252,18 @@ class Slide(object):
         normal_positions = None
         shadow_positions = None
 
+        LIMIT = self.width - self.border * 2
+
         count = 1
-        for estrofe in lyrics:
+        for estrofe in self.adapt_size(lyrics, LIMIT):
             for i in range(0, len(estrofe), self.stacks):
                 if i < len(estrofe) - (self.stacks - 1):
-                    text = "\n".join([estrofe[j] for j in range(i, i+self.stacks)])
+                    text = "\n".join([estrofe[j].split()[0].capitalize() 
+                                    + " " + " ".join(estrofe[j].split()[1:]) for j in range(i, i+self.stacks)])
                 else:
                     last = len(estrofe)
-                    text = "\n".join([estrofe[j] for j in range(i, last)])
+                    text = "\n".join([estrofe[j].split()[0].capitalize() 
+                                    + " " +  " ".join(estrofe[j].split()[1:]) for j in range(i, last)])
                 
                 w, h = Positions.get_font_size(text, font_type)
 
@@ -274,8 +286,8 @@ class Slide(object):
                 normal_position = getattr(normal_positions, self.position)
                 shadow_position = getattr(shadow_positions, self.position)
 
-                image = simplify.assign_image(background_path)
-                if shadow:
+                image = simplify.assign_image(self.background_path)
+                if self.shadow:
                     image = image.copy()
                     draw = ImageDraw.Draw(image)
                     draw.text(xy=shadow_position, text=text, fill=getattr(Colors(), "black"), \
@@ -290,7 +302,7 @@ class Slide(object):
 
                 count += 1
     
-    def create_pwp(self, prs, background_path, text, shadow=False):
+    def create_pwp(self, text):
         """
         Creates a pptx presentation based on the music lyrics
         """
@@ -301,7 +313,6 @@ class Slide(object):
         normal_positions = Positions(self.width, self.height, w, h)
         shadow_positions = Positions(self.width, self.height, w, h, shadow=True)
 
-        normal_positions.extra = self.extra
         normal_positions.border = self.border
         
         shadow_positions.extra = self.extra
@@ -313,43 +324,37 @@ class Slide(object):
         normal_position = getattr(normal_positions, self.position)
         shadow_position = getattr(shadow_positions, self.position)
 
-        layout = prs.slide_layouts[6]
+        layout = self.prs.slide_layouts[6]
         
-        slide = prs.slides.add_slide(layout)
+        slide = self.prs.slides.add_slide(layout)
 
-        # slide.shapes._spTree.insert(0, picture._element)
-        slide.shapes.add_picture(background_path, 0, 0, height = Px(self.height))
+        slide.shapes.add_picture(self.background_path, 0, 0, height = Px(self.height))
 
         alignment = Positions.check_alignment(self.position)
-        
-        if len(self.position.split("_")) > 1 and self.position.split("_")[0] == "top":
-            border_plus = -70
-            multiplier_top = 1
-        elif len(self.position.split("_")) > 1 and self.position.split("_")[0] == "bottom":
-            border_plus = 0
-            multiplier_top = -1
-        else:
-            border_plus = 0
-            multiplier_top = 0
-        
-        if len(self.position.split("_")) > 1 and self.position.split("_")[1] == "left":
-            multiplier_left = -1
-        elif len(self.position.split("_")) > 1 and self.position.split("_")[1] == "right":
-            multiplier_left = 1
-        else:
-            multiplier_left = 0
 
-        if shadow:
-            txBox = slide.shapes.add_textbox(0, 0, Px(w), Px(h))
+        if "_" in self.position:
+            h_alignment = self.position.split("_")[0].replace("center", "middle").upper()
+        else:
+            h_alignment = self.position.upper()
+
+        if self.shadow:
+            txBox = slide.shapes.add_textbox(Px(-self.extra), Px(-self.extra), 
+                                             Px(self.width), Px(self.height))
 
             tf = txBox.text_frame
+            tf.vertical_anchor = getattr(MSO_ANCHOR, h_alignment)
+
+            if len(self.position.split("_")) > 1 and self.position.split("_")[1] == "left":
+                tf.margin_left = Px(self.border)
+            elif len(self.position.split("_")) > 1 and self.position.split("_")[1] == "right":
+                tf.margin_right = Px(self.border)
+            
+            if len(self.position.split("_")) > 1 and self.position.split("_")[0] == "top":
+                tf.margin_top = Px(self.border)
+            elif len(self.position.split("_")) > 1 and self.position.split("_")[1] == "bottom":
+                tf.margin_bottom = Px(self.border)
 
             tf.word_wrap = True
-
-            txBox.width = prs.slide_width
-            txBox.height = prs.slide_height
-            txBox.top = Px(shadow_position[1] + border_plus + self.border * multiplier_top)
-            txBox.left = Px(0 - self.extra - self.border * multiplier_left * self.width / self.height)
 
             p = tf.paragraphs[0]
             p.text = text
@@ -357,22 +362,29 @@ class Slide(object):
 
             font = p.font
 
-            font.name = self.font_type.get_path()
+            font.name = self.font_type.get_family()
             font.size = Px(self.font_type.get_size())
             font.color.rgb = RGBColor(*getattr(Colors(), "black"))
 
-            font.bold = True if self.font_type.is_bold() else False
+            font.bold = True if self.font_type.get_text_format() == "bold" else False
+            font.italic = True if self.font_type.get_text_format() == "italic" else False
 
-        txBox = slide.shapes.add_textbox(0, 0, Px(w), Px(h))
+        txBox = slide.shapes.add_textbox(0, 0, Px(self.width), Px(self.height))
 
         tf = txBox.text_frame
+        tf.vertical_anchor = getattr(MSO_ANCHOR, h_alignment)
+
+        if len(self.position.split("_")) > 1 and self.position.split("_")[1] == "left":
+            tf.margin_left = Px(self.border)
+        elif len(self.position.split("_")) > 1 and self.position.split("_")[1] == "right":
+            tf.margin_right = Px(self.border)
+        
+        if len(self.position.split("_")) > 1 and self.position.split("_")[0] == "top":
+            tf.margin_top = Px(self.border)
+        elif len(self.position.split("_")) > 1 and self.position.split("_")[0] == "bottom":
+            tf.margin_bottom = Px(self.border)
 
         tf.word_wrap = True
-
-        txBox.width = prs.slide_width
-        txBox.height = prs.slide_height
-        txBox.top = Px(normal_position[1] + border_plus + self.border * multiplier_top)
-        txBox.left = Px(0 - self.border * multiplier_left * self.width / self.height)
 
         p = tf.paragraphs[0]
         p.text = text
@@ -380,49 +392,29 @@ class Slide(object):
 
         font = p.font
         
-        font.name = self.font_type.get_path()
+        font.name = self.font_type.get_family()
         font.size = Px(self.font_type.get_size())
         font.color.rgb = RGBColor(*self.color)
 
-        font.bold = True if self.font_type.is_bold() else False
+        font.bold = True if self.font_type.get_text_format() == "bold" else False
+        font.italic = True if self.font_type.get_text_format() == "italic" else False
     
 
-    def create_slideshow(self, background_path, lyrics, shadow=False, font_format=[]):
-        prs = Presentation()
-        prs.slide_width = Px(self.width)
-        prs.slide_height = Px(self.height)
+    def create_slideshow(self, lyrics, font_format=[]):
+        self.prs.slide_width = Px(self.width)
+        self.prs.slide_height = Px(self.height)
 
-        LIMIT = 450
+        LIMIT = self.width - self.border * 2
         for i, estrofe in enumerate(self.adapt_size(lyrics, LIMIT)):
             for i in range(0, len(estrofe), self.stacks):
                 if i < len(estrofe) - (self.stacks - 1):
-                    text = "\n".join([estrofe[j].capitalize() for j in range(i, i+self.stacks)])
+                    text = "\n".join([estrofe[j].split()[0].capitalize() 
+                                    + " " + " ".join(estrofe[j].split()[1:]) for j in range(i, i+self.stacks)])
                 else:
                     last = len(estrofe)
-                    text = "\n".join([estrofe[j].capitalize() for j in range(i, last)])
+                    text = "\n".join([estrofe[j].split()[0].capitalize() 
+                                    + " " +  " ".join(estrofe[j].split()[1:]) for j in range(i, last)])
 
-                font_type = ImageFont.truetype(self.font_type.get_path(), self.font_type.get_size())
+                # font_type = ImageFont.truetype(self.font_type.get_path(), self.font_type.get_size())
 
-                self.create_pwp(prs, "/home/mateusap1/Pictures/Outros/Fundo Letra da Música.png",
-                                text, shadow)
-
-        prs.save(f"{self.directory}.pptx")
-
-
-if __name__ == "__main__":
-    font_size = 72
-    slide_presentation = Slide()
-    slide_presentation.font_type.set_size(font_size)
-    slide_presentation.border = 72
-    slide_presentation.extra = 10 * font_size / 72
-    slide_presentation.stacks = 2
-    lyrics = requestsScrape("Projeto Sola", "23")
-    for position in ["middle", "center_left", "center_right", "top_left", \
-                     "top_center", "top_right", "bottom_left", "bottom_center", "bottom_right"]:
-        slide_presentation.position = position
-        slide_presentation.directory = f"../slides/{position}"
-
-        slide_presentation.create_slideshow("/home/mateusap1/Pictures/Outros/Fundo Letra da Música.png", \
-                                            lyrics, True)
-        slide_presentation.create_imageshow("/home/mateusap1/Pictures/Outros/Fundo Letra da Música.png", \
-            lyrics, shadow=True)
+                self.create_pwp(text)
