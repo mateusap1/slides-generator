@@ -19,7 +19,7 @@ import get_lyrics
 
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
-app.secret_key = os.urandom(24)
+app.config['SECRET_KEY'] = os.urandom(24)
 
 @app.route("/", methods=["GET", "POST"])
 def index():
