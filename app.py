@@ -67,7 +67,7 @@ def index():
         sprs.extra = 6 * font_size / 72
         sprs.stacks = stacks
         sprs.position = position
-        sprs.directory = SLIDES_FOLDER + key
+        sprs.directory = None
 
         sprs.prs = Presentation()
         sprs.create_slideshow(lyrics)
