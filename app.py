@@ -14,8 +14,8 @@ from slide import Slide
 import simplify
 import get_lyrics
 
-UPLOAD_FOLDER = '../uploads/'
-SLIDES_FOLDER = '../slides/'
+UPLOAD_FOLDER = './uploads/'
+SLIDES_FOLDER = './slides/'
 
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
@@ -33,8 +33,6 @@ def index():
         music = request.form.get("music")
         artist = request.form.get("artist")
 
-        # lyrics = Thread(target=get_lyrics.requestsScrape(artist, music))
-
         font_name = request.form.get("font-names")
         font_size = int(request.form.get("font-sizes"))
 
@@ -48,10 +46,9 @@ def index():
         filename = UPLOAD_FOLDER + f.filename
         f.save(filename)
 
-        if simplify.get_size(simplify.assign_image(filename))[1] < font_size * stacks * 1.2 + border * 2:
-            font_size = int((simplify.get_size(simplify.assign_image(filename))[1] - border * 2) / stacks * 1.2)
+        if simplify.get_size(simplify.assign_image(filename))[1] < (font_size * stacks * 1.2 + border * 2):
+            font_size = int((simplify.get_size(simplify.assign_image(filename))[1] - border * 2) / (stacks * 1.2))
 
-        # lyrics = get_lyrics.requestsScrape(artist, music)
         lyrics = session['lyrics']
 
         if type(lyrics) is dict:
@@ -60,6 +57,7 @@ def index():
         key = os.urandom(24).hex()
 
         sprs = Slide(filename)
+        sprs.width, sprs.height = simplify.get_size(simplify.assign_image(filename))
         sprs.font_type.set_family(font_name)
         sprs.font_type.set_size(font_size)
         if text_format and "Shadow" in text_format:
