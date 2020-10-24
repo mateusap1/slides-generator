@@ -25,7 +25,7 @@ def requestsScrape(original_artist, original_music):
     else:
         music, artist = title
 
-    if original_artist == artist and original_music == music:
+    if original_artist.lower() == artist.lower() and original_music.lower() == music.lower():
         letra = pure_letra(f"{url}/letra")
     else:
         return {"Music": music, "Artist": artist, "Url": url}
