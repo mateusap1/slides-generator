@@ -13,20 +13,8 @@ from unicodedata import normalize
 def requestsScrape(original_artist, original_music):
     """Gets the lyrics from cifraclub according to the artist and music names"""
 
-    # Basically changes the name in a way that the website will understand
-    # artist = stress_remove(original_artist).lower().replace(" ", "-")
-    # music = stress_remove(original_music).lower().split(" ")
-    # music = list(filter(lambda i: i != "e", music))
-    # music = "-".join(music)
-
-    # url = f"https://www.cifraclub.com.br/{artist}/{music}/letra/"
-    
-    # # Get the lyrics from the website
-    # letra = pure_letra(url)
-
-    # If it didn't find anything, use the search_in_google function to find the correct url and filters it
-    # if len(letra) == 0:
     url = search_in_google(original_artist, original_music)
+
     if not url:
         return None
     else:
@@ -70,14 +58,12 @@ def pure_letra(url):
 # Filtra a letra em um formato mais fácil para usar depois
 def filter_letra(link):
     """Filters the lyrics, so it's easier to manipulate it"""
-    # Basically splits the strophes in verses. *Is 'strophes' really a word? I mean 'group of verses'.
     # Basicamente divide as estrofes em versos
     if hasattr(link[0], 'text'):
         result = [i.text.split("\n") for i in link]
     else:
         result = [i.split("\n") for i in link]
 
-    # If it has the format of "(x3)" or "(x4)" it will repeat the strophe N times according to "(xN)"
     # Se tem o formato "(x3)" ou "(x4)", repete a estrofe N vezes de acordo com "(xN)"
     regex = re.escape("(") + r"x\d" + re.escape(")")
 
@@ -146,11 +132,9 @@ def divide_by_text(text):
     while text[-1] == "\n":
         text = text[:-1]
 
-    # If there is anything between parenthesis, remove it.
     regex = re.escape("(") + r".+\S" + re.escape(")") + "\n"
     text = re.sub(regex, "", text)
 
-    # Divide in strophes
     # Divide em estrofes
     text = text.split("\n\n")
 
@@ -164,6 +148,5 @@ def divide_by_text(text):
 
 
 # https://wiki.python.org.br/RemovedorDeAcentos
-# I really need this stress_remove for my life
 def stress_remove(txt, codif='utf-8'):
     return normalize('NFKD', txt).encode('ASCII', 'ignore').decode('ASCII')

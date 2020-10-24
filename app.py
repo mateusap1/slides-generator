@@ -8,14 +8,14 @@ import tarfile
 import shutil
 import json
 
+import urllib3.request
+from io import BytesIO
+
 from threading import Event, Thread
 
 from slide import Slide
 import simplify
 import get_lyrics
-
-UPLOAD_FOLDER = './uploads/'
-SLIDES_FOLDER = './slides/'
 
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
@@ -42,12 +42,10 @@ def index():
         border = int(request.form.get("border"))
         text_format = request.form.get("format")
 
-        f = request.files['background-path']
-        filename = UPLOAD_FOLDER + f.filename
-        f.save(filename)
+        f = request.files['background-path'].read()
 
-        if simplify.get_size(simplify.assign_image(filename))[1] < (font_size * stacks * 1.2 + border * 2):
-            font_size = int((simplify.get_size(simplify.assign_image(filename))[1] - border * 2) / (stacks * 1.2))
+        if simplify.get_size(simplify.assign_image(BytesIO(f)))[1] < (font_size * stacks * 1.2 + border * 2):
+            font_size = int((simplify.get_size(simplify.assign_image(BytesIO(f)))[1] - border * 2) / (stacks * 1.2))
 
         lyrics = session['lyrics']
 
@@ -56,8 +54,9 @@ def index():
         
         key = os.urandom(24).hex()
 
-        sprs = Slide(filename)
-        sprs.width, sprs.height = simplify.get_size(simplify.assign_image(filename))
+        sprs = Slide(None)
+        sprs.image_bytes = f
+        sprs.width, sprs.height = simplify.get_size(simplify.assign_image(BytesIO(f)))
         sprs.font_type.set_family(font_name)
         sprs.font_type.set_size(font_size)
         if text_format and "Shadow" in text_format:
@@ -70,28 +69,18 @@ def index():
         sprs.position = position
         sprs.directory = SLIDES_FOLDER + key
 
-        if output_format == "pwp":
-            sprs.prs = Presentation()
-            sprs.create_slideshow(lyrics)
-            sprs.prs.save(sprs.directory + ".pptx")
-            
-            file_to_be_sent = send_file(sprs.directory + ".pptx", as_attachment=True, attachment_filename="Slides.pptx")
+        sprs.prs = Presentation()
+        sprs.create_slideshow(lyrics)
 
-            os.remove(filename)
-            os.remove(sprs.directory + ".pptx")
+        out = BytesIO()
+        sprs.prs.save(out)
+        out.seek(0)
+        
+        file_to_be_sent = send_file(out, as_attachment=True,
+                                    mimetype="application/vnd.openxmlformats-officedocument.presentationml.presentation",
+                                    attachment_filename="Slides.pptx")
 
-            return file_to_be_sent
-        else:
-            sprs.create_imageshow(lyrics)
-            compress(sprs.directory, "Slide")
-
-            file_to_be_sent = send_file(sprs.directory + ".tgz", as_attachment=True, attachment_filename="Slides.tgz")
-
-            os.remove(filename)
-            os.remove(sprs.directory + ".tgz")
-            os.rmdir(sprs.directory)
-
-            return file_to_be_sent
+        return file_to_be_sent
 
 
 @app.route("/validate/", methods=["POST"])

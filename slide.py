@@ -3,6 +3,7 @@ import simplify
 import tarfile
 import shutil
 import re
+import io
 
 from get_lyrics import requestsScrape, divide_by_text
 import simplify
@@ -199,6 +200,7 @@ class Slide(object):
         self.height = 1080
 
         self.background_path = background_path
+        self.image_bytes = None
 
         self.font_type = FontType("Ubuntu", 40)
         self.shadow = False
@@ -243,7 +245,10 @@ class Slide(object):
         """
         Creates an image show
         """
-        image = simplify.assign_image(self.background_path)
+        if not self.image_bytes:
+            image = simplify.assign_image(self.background_path)
+        else:
+            image = simplify.assign_image(io.BytesIO(self.image_bytes))
 
         os.mkdir(self.directory)
 
@@ -328,7 +333,10 @@ class Slide(object):
         
         slide = self.prs.slides.add_slide(layout)
 
-        slide.shapes.add_picture(self.background_path, 0, 0, height = Px(self.height))
+        if not self.image_bytes:
+            slide.shapes.add_picture(self.background_path, 0, 0, height = Px(self.height))
+        else:
+            slide.shapes.add_picture(io.BytesIO(self.image_bytes), 0, 0, height = Px(self.height))
 
         alignment = Positions.check_alignment(self.position)
 

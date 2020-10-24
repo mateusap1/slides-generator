@@ -1,7 +1,6 @@
 build
 .vscode/settings.json
 __pycache__
-myscripts/venv
-images
-myscripts/setup.py
-myscripts/tests.py
+slides
+uploads
+\.vscode
