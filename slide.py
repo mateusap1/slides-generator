@@ -359,7 +359,7 @@ class Slide(object):
             
             if len(self.position.split("_")) > 1 and self.position.split("_")[0] == "top":
                 tf.margin_top = Px(self.border)
-            elif len(self.position.split("_")) > 1 and self.position.split("_")[1] == "bottom":
+            elif len(self.position.split("_")) > 1 and self.position.split("_")[0] == "bottom":
                 tf.margin_bottom = Px(self.border)
 
             tf.word_wrap = True
