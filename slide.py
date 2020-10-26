@@ -195,12 +195,11 @@ class FontType(object):
 
 
 class Slide(object):
-    def __init__(self, background_path):
+    def __init__(self, image):
         self.width = 1920
         self.height = 1080
 
-        self.background_path = background_path
-        self.image_bytes = None
+        self.image = image
 
         self.font_type = FontType("Ubuntu", 40)
         self.shadow = False
@@ -245,10 +244,7 @@ class Slide(object):
         """
         Creates an image show
         """
-        if not self.image_bytes:
-            image = simplify.assign_image(self.background_path)
-        else:
-            image = simplify.assign_image(io.BytesIO(self.image_bytes))
+        image = simplify.assign_image(self.image)
 
         os.mkdir(self.directory)
 
@@ -291,7 +287,7 @@ class Slide(object):
                 normal_position = getattr(normal_positions, self.position)
                 shadow_position = getattr(shadow_positions, self.position)
 
-                image = simplify.assign_image(self.background_path)
+                image = simplify.assign_image(self.image)
                 if self.shadow:
                     image = image.copy()
                     draw = ImageDraw.Draw(image)
@@ -313,30 +309,15 @@ class Slide(object):
         """
 
         font_type = ImageFont.truetype(self.font_type.get_path(), self.font_type.get_size())
-        w, h = Positions.get_font_size(text, font_type)
-
-        normal_positions = Positions(self.width, self.height, w, h)
-        shadow_positions = Positions(self.width, self.height, w, h, shadow=True)
-
-        normal_positions.border = self.border
-        
-        shadow_positions.extra = self.extra
-        shadow_positions.border = self.border
-
-        normal_positions.update()
-        shadow_positions.update()
-
-        normal_position = getattr(normal_positions, self.position)
-        shadow_position = getattr(shadow_positions, self.position)
 
         layout = self.prs.slide_layouts[6]
         
         slide = self.prs.slides.add_slide(layout)
 
-        if not self.image_bytes:
-            slide.shapes.add_picture(self.background_path, 0, 0, height = Px(self.height))
+        if type(self.image) is str:
+            slide.shapes.add_picture(self.image, 0, 0, height = Px(self.height))
         else:
-            slide.shapes.add_picture(io.BytesIO(self.image_bytes), 0, 0, height = Px(self.height))
+            slide.shapes.add_picture(io.BytesIO(self.image), 0, 0, height = Px(self.height))
 
         alignment = Positions.check_alignment(self.position)
 

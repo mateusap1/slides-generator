@@ -11,15 +11,14 @@ import json
 import urllib3.request
 from io import BytesIO
 
-from threading import Event, Thread
-
 from slide import Slide
 import simplify
 import get_lyrics
+import config
 
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
-app.config['SECRET_KEY'] = "asasaFafxv34215rsdg3qs23sdf3"
+app.config['SECRET_KEY'] = config.secret_key
 app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
 
@@ -59,8 +58,7 @@ def index():
         
         key = os.urandom(24).hex()
 
-        sprs = Slide(None)
-        sprs.image_bytes = f
+        sprs = Slide(f)
         sprs.width, sprs.height = simplify.get_size(simplify.assign_image(BytesIO(f)))
         sprs.font_type.set_family(font_name)
         sprs.font_type.set_size(font_size)
@@ -121,4 +119,4 @@ def compress(path, name):
 
 
 if __name__ == "__main__":
-    app.run()
+    app.run(debug=True)
