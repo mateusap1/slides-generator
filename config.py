@@ -1,1 +1,0 @@
-secret_key = "asaafcxv32qRS3RSF3r4g3SDdsdSDF324fdF"
