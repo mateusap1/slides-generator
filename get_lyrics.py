@@ -1,12 +1,7 @@
 import requests
-
-from requests_html import HTMLSession
-from bs4 import BeautifulSoup
-
 import re
 
-from time import sleep, time
-
+from requests_html import HTMLSession
 from unicodedata import normalize
 
 
@@ -29,28 +24,29 @@ def requestsScrape(original_artist, original_music):
         letra = pure_letra(f"{url}/letra")
     else:
         return {"Music": music, "Artist": artist, "Url": url}
-    
+
     result = filter_letra(letra)
-    
+
     return result
 
 
 def pure_letra(url):
-    """Goes to the url and try to find the lyrics. If it wasn't the right website returns an empty list"""   
+    """Goes to the url and try to find the lyrics. If it wasn't the right website returns an empty list"""
     try:
         session = HTMLSession()
-        response = session.get(url)   
+        response = session.get(url)
     except requests.exceptions.RequestException as e:
         print(e)
         return []
 
     if response.status_code != 200:
         return []
-    
+
     # It gets the lyrics
     lyrics = response.html.xpath('//div[@class="letra"]/p')
     if len(lyrics) == 0:
-        lyrics = response.html.xpath('//div[@class="letra"]/div[@class="letra-l"]/p')
+        lyrics = response.html.xpath(
+            '//div[@class="letra"]/div[@class="letra-l"]/p')
 
     return lyrics
 
@@ -89,13 +85,13 @@ def search_in_google(artist, music):
     url = f"https://www.google.com/search?q={music} {artist} cifra club"
     try:
         session = HTMLSession()
-        response = session.get(url)   
+        response = session.get(url)
     except requests.exceptions.RequestException as e:
         print(e)
         return None
-    
+
     link = response.html.xpath('//div[@class="yuRUbf"]/a/@href')
-    
+
     if not link or "https://www.cifraclub" not in link[0]:
         print(f"Failed to find {music} lyrics!")
         return None
@@ -106,11 +102,10 @@ def search_in_google(artist, music):
 def get_music_title(url):
     try:
         session = HTMLSession()
-        response = session.get(url)   
+        response = session.get(url)
     except requests.exceptions.RequestException as e:
         print(e)
         return None
-    
 
     music_el = response.html.xpath('//h1[@class="t1"]')
     artist_el = response.html.xpath('//h2[@class="t3"]')
@@ -120,7 +115,7 @@ def get_music_title(url):
     else:
         music = music_el[0].text
         artist = artist_el[0].text
-    
+
     return music, artist
 
 
@@ -142,7 +137,7 @@ def divide_by_text(text):
 
     letra = filter_letra(text)
 
-    letra = filter(lambda x : len(x) > 0 and not "" in x, letra)
+    letra = filter(lambda x: len(x) > 0 and not "" in x, letra)
 
     return list(letra)
 

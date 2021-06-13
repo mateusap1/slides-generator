@@ -1,11 +1,7 @@
 import os
 import simplify
-import tarfile
-import shutil
-import re
 import io
 
-from get_lyrics import requestsScrape, divide_by_text
 import simplify
 
 import matplotlib.colors
@@ -16,10 +12,6 @@ from pptx.util import Pt, Inches, Cm
 from pptx.util import Length
 from pptx.dml.color import ColorFormat, RGBColor
 from pptx.enum.text import MSO_AUTO_SIZE, PP_ALIGN, MSO_ANCHOR
-
-
-# def find(s, ch):
-#     return (i for i, ltr in enumerate(s) if ltr == ch)
 
 
 def split_sentence(sentence, times):
