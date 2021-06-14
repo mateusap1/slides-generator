@@ -61,7 +61,7 @@ def draw_text(image, text, font, size, color, pos_name, shadow=False):
 
 def possible_positions():
     # return ['Meio', 'Centro-Esquerda', 'Centro-Direita', 'Inferior-Esquerda', 'Inferior-Direita']
-    return ['Middle', 'Center-Left', 'Center-Right', 'Bottom-Left', 'Bottom-Right', 
+    return ['Middle', 'Center-Left', 'Center-Right', 'Bottom-Left', 'Bottom-Right',
             'Bottom-Center', 'Top-Left', 'Top-Center', 'Top-Right']
 
 
@@ -127,6 +127,7 @@ def get_font_path(family, font_format="normal"):
     if font_format == "bold":
         font_format = "normal"
         weight = "bold"
-    font = matplotlib.font_manager.FontProperties(family=family, style=font_format, weight=weight)
+    font = matplotlib.font_manager.FontProperties(
+        family=family, style=font_format, weight=weight)
     file = matplotlib.font_manager.findfont(font)
     return file
