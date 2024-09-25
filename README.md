@@ -1,7 +1,3 @@
-<h1>slides-genarator</h1>
+# Slides Generator
 
-<p><b>slides-genarator</b> is an attempt of automating the process of creating slides for a music.</p>
-
-<h2>Usage</h2>
-
-<p>There's a (not very) nice website where you can test it: https://slides-generator.herokuapp.com/</p>
+This is a collection of Python modules designed to scrape music lyrics from the web and convert them into slide presentations. The tools automate the process of gathering lyrics and formatting them into slides, making it easier to create presentations for events like karaoke, sing-alongs, or performances.
